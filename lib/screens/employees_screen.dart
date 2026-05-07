@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:app_geriatrico/core/app_colors.dart';
+import 'package:app_geriatrico/core/config.dart';
 import 'package:app_geriatrico/data/models/employee_model.dart';
 import 'package:app_geriatrico/data/repositories/employee_repository.dart';
+import 'package:app_geriatrico/services/api_services.dart';
 import 'package:app_geriatrico/screens/employee_detail_screen.dart';
 import 'package:app_geriatrico/screens/employee_create_screen.dart';
 
@@ -25,7 +27,10 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = EmployeeRepository(widget.token);
+    // FIX: EmployeeRepository ahora recibe ApiService, no el token directo
+    _repo = EmployeeRepository(
+      ApiService(baseUrl: ApiConfig.baseUrl, token: widget.token),
+    );
     _load();
   }
 
@@ -88,7 +93,6 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
     );
     if (created == true) _load();
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -299,7 +303,7 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(18, 4, 18, 80), 
+      padding: const EdgeInsets.fromLTRB(18, 4, 18, 80),
       itemCount: _filtered.length,
       itemBuilder: (_, i) => _buildCard(_filtered[i]),
     );
@@ -320,7 +324,6 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Avatar
               CircleAvatar(
                 radius: 22,
                 backgroundColor: const Color(0xFF4A1240).withValues(alpha: 0.90),
@@ -334,8 +337,6 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                 ),
               ),
               const SizedBox(width: 14),
-
-              // Info
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,7 +393,6 @@ class _EmployeesScreenState extends State<EmployeesScreen> {
                   ],
                 ),
               ),
-
               const SizedBox(width: 8),
               Icon(Icons.arrow_forward_ios_rounded,
                   size: 12, color: Colors.white.withValues(alpha: 0.25)),

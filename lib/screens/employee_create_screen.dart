@@ -1,10 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:app_geriatrico/core/app_colors.dart';
 import 'package:app_geriatrico/core/config.dart';
 import 'package:app_geriatrico/data/models/role_model.dart';
 import 'package:app_geriatrico/data/models/specialty_model.dart';
 import 'package:app_geriatrico/data/repositories/employee_repository.dart';
+import 'package:app_geriatrico/services/api_services.dart';
 
 class CreateEmployeeScreen extends StatefulWidget {
   final String token;
@@ -17,7 +17,6 @@ class CreateEmployeeScreen extends StatefulWidget {
 
 class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
   late final EmployeeRepository _repo;
-  late final Dio _dio;
 
   final _formKey = GlobalKey<FormState>();
   bool _saving = false;
@@ -37,7 +36,6 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
   final _phone = TextEditingController();
   final _address = TextEditingController();
   final _birthDate = TextEditingController();
-
   final _employeeCode = TextEditingController();
   final _licenseNumber = TextEditingController();
   final _hireDate = TextEditingController();
@@ -46,14 +44,10 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = EmployeeRepository(widget.token);
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    ));
+    // FIX: EmployeeRepository ahora recibe ApiService
+    _repo = EmployeeRepository(
+      ApiService(baseUrl: ApiConfig.baseUrl, token: widget.token),
+    );
     _loadRoles();
     _loadSpecialties();
   }
@@ -81,10 +75,8 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
 
   Future<void> _loadSpecialties() async {
     try {
-      final res = await _dio.get('/specialties');
-      final list = (res.data as List)
-          .map((s) => Specialty.fromJson(s as Map<String, dynamic>))
-          .toList();
+      // FIX: usa _repo.getSpecialties() en lugar de Dio directo
+      final list = await _repo.getSpecialties();
       if (mounted) setState(() => _allSpecialties = list);
     } catch (e) {
       debugPrint('Error cargando especialidades: $e');
@@ -142,20 +134,17 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
         'roles': _selectedRoleIds.toList(),
       };
 
-      // Crear el empleado y obtener el objeto devuelto con su ID
       final created = await _repo.create(data);
 
-      // Asignar especialidades si se seleccionaron
+      // FIX: asigna especialidades usando _repo en lugar de Dio directo
       if (_selectedSpecialtyIds.isNotEmpty) {
         try {
-          await _dio.put(
-            '/users/${created.id}/specialties',
-            data: {'specialty_ids': _selectedSpecialtyIds.toList()},
-            options: Options(headers: {'Content-Type': 'application/json'}),
+          await _repo.replaceSpecialties(
+            created.id,
+            _selectedSpecialtyIds.toList(),
           );
         } catch (e) {
           debugPrint('Error asignando especialidades: $e');
-          // No bloqueamos el flujo — el empleado ya fue creado
         }
       }
 
@@ -374,8 +363,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
             borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
           ),
           focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white54),
-          ),
+              borderSide: BorderSide(color: Colors.white54)),
           errorBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: AppColors.error.withValues(alpha: 0.65)),
           ),
@@ -416,8 +404,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
             borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
           ),
           focusedBorder: const UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white54),
-          ),
+              borderSide: BorderSide(color: Colors.white54)),
           errorBorder: UnderlineInputBorder(
             borderSide: BorderSide(color: AppColors.error.withValues(alpha: 0.65)),
           ),

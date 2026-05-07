@@ -1,4 +1,3 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:app_geriatrico/core/app_colors.dart';
 import 'package:app_geriatrico/core/config.dart';
@@ -6,6 +5,7 @@ import 'package:app_geriatrico/data/models/employee_model.dart';
 import 'package:app_geriatrico/data/models/role_model.dart';
 import 'package:app_geriatrico/data/models/specialty_model.dart';
 import 'package:app_geriatrico/data/repositories/employee_repository.dart';
+import 'package:app_geriatrico/services/api_services.dart';
 
 class EmployeeDetailScreen extends StatefulWidget {
   final Employee employee;
@@ -23,7 +23,6 @@ class EmployeeDetailScreen extends StatefulWidget {
 
 class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
   late final EmployeeRepository _repo;
-  late final Dio _dio;
   late Employee _emp;
 
   bool _isEditing = false;
@@ -34,7 +33,6 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
   late Set<int> _selectedRoleIds;
   late Set<int> _selectedSpecialtyIds;
 
-  // Controllers
   late TextEditingController _name;
   late TextEditingController _lastName;
   late TextEditingController _email;
@@ -52,14 +50,10 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
   @override
   void initState() {
     super.initState();
-    _repo = EmployeeRepository(widget.token);
-    _dio = Dio(BaseOptions(
-      baseUrl: ApiConfig.baseUrl,
-      headers: {
-        'Accept': 'application/json',
-        'Authorization': 'Bearer ${widget.token}',
-      },
-    ));
+    // FIX: EmployeeRepository ahora recibe ApiService
+    _repo = EmployeeRepository(
+      ApiService(baseUrl: ApiConfig.baseUrl, token: widget.token),
+    );
     _emp = widget.employee;
     _initControllers();
     _loadRoles();
@@ -104,10 +98,8 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
 
   Future<void> _loadAllSpecialties() async {
     try {
-      final res = await _dio.get('/specialties');
-      final list = (res.data as List)
-          .map((s) => Specialty.fromJson(s as Map<String, dynamic>))
-          .toList();
+      // FIX: usa _repo.getSpecialties() en lugar de Dio directo
+      final list = await _repo.getSpecialties();
       if (mounted) setState(() => _allSpecialties = list);
     } catch (e) {
       debugPrint('Error cargando especialidades: $e');
@@ -149,10 +141,13 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
 
       final updated = await _repo.update(_emp.id, data, _selectedRoleIds.toList());
 
-      // Update specialties separately
-      await _updateSpecialties(updated.id);
+      // FIX: usa _repo.replaceSpecialties() en lugar de Dio directo
+      try {
+        await _repo.replaceSpecialties(_emp.id, _selectedSpecialtyIds.toList());
+      } catch (e) {
+        debugPrint('Error actualizando especialidades: $e');
+      }
 
-      // Reload employee with updated specialties
       final finalEmployee = updated.copyWith(
         specialties: _allSpecialties
             .where((s) => _selectedSpecialtyIds.contains(s.id))
@@ -170,18 +165,6 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
     } catch (e) {
       setState(() => _saving = false);
       if (mounted) _showSnack(e.toString().replaceFirst('Exception: ', ''));
-    }
-  }
-
-  Future<void> _updateSpecialties(int employeeId) async {
-    try {
-      await _dio.put(
-        '/users/$employeeId/specialties',
-        data: {'specialty_ids': _selectedSpecialtyIds.toList()},
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
-    } catch (e) {
-      debugPrint('Error actualizando especialidades: $e');
     }
   }
 
@@ -448,7 +431,6 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
                   style: TextStyle(
                       fontSize: 12, color: Colors.white.withValues(alpha: 0.40)),
                 ),
-                // Show specialties in header if any
                 if (_emp.specialties.isNotEmpty) ...[
                   const SizedBox(height: 5),
                   Wrap(
@@ -755,7 +737,6 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
           Container(height: 1, color: Colors.white.withValues(alpha: 0.06)),
           Padding(
             padding: const EdgeInsets.all(16),
-            // MODO VISTA: siempre muestra _emp.specialties directamente
             child: !_isEditing
                 ? _emp.specialties.isEmpty
                     ? Text('Sin especialidades asignadas',
@@ -792,7 +773,6 @@ class _EmployeeDetailScreenState extends State<EmployeeDetailScreen> {
                                 ))
                             .toList(),
                       )
-                // MODO EDICIÓN: chips con toda la lista de especialidades
                 : _allSpecialties.isEmpty
                     ? Row(
                         children: [

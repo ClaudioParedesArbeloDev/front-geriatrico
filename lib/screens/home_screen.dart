@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:app_geriatrico/services/auth_services.dart';
+import 'package:app_geriatrico/data/repositories/auth_repository.dart';
 import 'package:app_geriatrico/core/app_colors.dart';
 
 import 'package:app_geriatrico/screens/employees_screen.dart';
@@ -42,7 +42,8 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
   }
 
   Future<void> logout() async {
-    final success = await AuthService.logout(widget.token);
+    // FIX: usa AuthRepository en lugar del AuthService eliminado
+    final success = await AuthRepository().logout(widget.token);
     if (!mounted) return;
     if (success) {
       Navigator.pushNamedAndRemoveUntil(context, '/login', (route) => false);
@@ -613,14 +614,11 @@ class _HomeScreenState extends State<HomeScreen> with SingleTickerProviderStateM
             onTap();
             return;
           }
-
-          // Navigate to module
           final moduleTitles = ['', 'Pacientes', 'Camas', 'Empleados', 'Actividades'];
           if (index > 0 && index < moduleTitles.length) {
             _navigate(moduleTitles[index]);
             return;
           }
-
           if (index == -1) return;
           setState(() => selectedIndex = index);
         },

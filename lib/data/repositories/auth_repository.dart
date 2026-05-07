@@ -1,24 +1,36 @@
-import 'package:dio/dio.dart';
-import 'package:app_geriatrico/data/models/auth_response.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 import 'package:app_geriatrico/core/config.dart';
+import 'package:app_geriatrico/data/models/auth_response.dart';
 
 class AuthRepository {
-  final Dio _dio = Dio(BaseOptions(
-    baseUrl: ApiConfig.baseUrl,
-    headers: {'Accept': 'application/json'},
-  ));
-
   Future<AuthResponse> login(String email, String password) async {
-    try {
-      final response = await _dio.post('/login', data: {
-        'email': email,
-        'password': password,
-      });
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/login'),
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({'email': email, 'password': password}),
+    );
 
-      return AuthResponse.fromJson(response.data);
-    } on DioException catch (e) {
-      final message = e.response?.data['message'] ?? 'Error en el servidor';
-      throw Exception(message);
+    final body = jsonDecode(response.body) as Map<String, dynamic>;
+
+    if (response.statusCode == 200) {
+      return AuthResponse.fromJson(body);
     }
+
+    throw Exception(body['message'] ?? 'Credenciales incorrectas');
+  }
+
+  Future<bool> logout(String token) async {
+    final response = await http.post(
+      Uri.parse('${ApiConfig.baseUrl}/logout'),
+      headers: {
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+      },
+    );
+    return response.statusCode == 200;
   }
 }
