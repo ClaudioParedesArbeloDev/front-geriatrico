@@ -3,8 +3,8 @@ class Allergy {
   final String name;
   final String? description;
 
-  // Campos del pivot cuando viene asignada a un paciente
-  final String? severity; // 'mild' | 'moderate' | 'severe'
+  
+  final String? severity; 
   final String? reaction;
 
   const Allergy({

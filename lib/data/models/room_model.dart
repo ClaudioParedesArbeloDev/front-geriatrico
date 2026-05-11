@@ -1,62 +1,74 @@
 class Room {
   final int id;
-  final String number;
-  final String? name;
-  final String? floor;
+  final String number; 
+  final String? name;   
+  final String? floor;  
   final int capacity;
-  final String type;   // 'private' | 'shared'
-  final String status; // 'available' | 'maintenance' | 'inactive'
+  final String type;   
+  final String status;  
+  final List<RoomBedSummary> beds;
 
   const Room({
     required this.id,
     required this.number,
     this.name,
     this.floor,
-    required this.capacity,
+    this.capacity = 1,
     this.type = 'shared',
     this.status = 'available',
+    this.beds = const [],
   });
 
+  
+  int get totalBeds      => beds.length;
+  int get availableBeds  => beds.where((b) => b.status == 'available').length;
+  int get occupiedBeds   => beds.where((b) => b.status == 'occupied').length;
+  int get maintenanceBeds => beds.where((b) => b.status == 'maintenance').length;
+
+ 
   factory Room.fromJson(Map<String, dynamic> json) {
+    final rawBeds = json['beds'] as List<dynamic>? ?? [];
     return Room(
-      id: json['id'],
-      number: json['number'] ?? '',
-      name: json['name'],
-      floor: json['floor']?.toString(),
-      capacity: json['capacity'] ?? 1,
-      type: json['type'] ?? 'shared',
-      status: json['status'] ?? 'available',
+      id:       json['id'] as int,
+      number:   json['number']?.toString() ?? '',
+      name:     json['name'] as String?,
+      floor:    json['floor']?.toString(),
+      capacity: json['capacity'] as int? ?? 1,
+      type:     json['type'] as String? ?? 'shared',
+      status:   json['status'] as String? ?? 'available',
+      beds:     rawBeds
+          .map((b) => RoomBedSummary.fromJson(b as Map<String, dynamic>))
+          .toList(),
     );
   }
 
-  Map<String, dynamic> toJson() {
-    return {
-      'number': number,
-      if (name != null && name!.isNotEmpty) 'name': name,
-      if (floor != null && floor!.isNotEmpty) 'floor': int.tryParse(floor!),
-      'capacity': capacity,
-      'type': type,
-      'status': status,
-    };
-  }
+  Map<String, dynamic> toJson() => {
+        'number':   number,
+        if (name != null && name!.isNotEmpty) 'name': name,
+        if (floor != null && floor!.isNotEmpty) 'floor': floor,
+        'capacity': capacity,
+        'type':     type,
+        'status':   status,
+      };
+}
 
-  Room copyWith({
-    int? id,
-    String? number,
-    String? name,
-    String? floor,
-    int? capacity,
-    String? type,
-    String? status,
-  }) {
-    return Room(
-      id: id ?? this.id,
-      number: number ?? this.number,
-      name: name ?? this.name,
-      floor: floor ?? this.floor,
-      capacity: capacity ?? this.capacity,
-      type: type ?? this.type,
-      status: status ?? this.status,
-    );
-  }
+
+class RoomBedSummary {
+  final int id;
+  final String number;
+  final String status;
+
+  const RoomBedSummary({
+    required this.id,
+    required this.number,
+    required this.status,
+  });
+
+  factory RoomBedSummary.fromJson(Map<String, dynamic> json) =>
+      RoomBedSummary(
+        id:     json['id'] as int,
+        number: json['bed_number']?.toString() ??
+                json['number']?.toString() ?? '',
+        status: json['status'] as String? ?? 'available',
+      );
 }

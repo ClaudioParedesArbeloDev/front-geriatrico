@@ -32,7 +32,7 @@ class MedicalPrescription {
     this.schedules = const [],
   });
 
-  /// Horarios formateados para mostrar: "08:00 · 14:00 · 20:00"
+  
   String get schedulesDisplay {
     if (schedules.isEmpty) return frequency;
     return schedules.map((s) => s.scheduledTime).join(' · ');

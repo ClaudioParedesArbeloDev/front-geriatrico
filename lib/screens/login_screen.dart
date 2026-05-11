@@ -70,12 +70,19 @@ class _LoginScreenState extends State<LoginScreen>
         SnackBar(content: Text('Bienvenido ${response.user['name']}')),
       );
 
+      
+      final rawRoles = response.user['roles'] as List<dynamic>? ?? [];
+      final roles = rawRoles
+          .map((r) => (r as Map<String, dynamic>)['name'] as String)
+          .toList();
+
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(
           builder: (_) => HomeScreen(
-            userName:  response.user['name'],
-            token:     response.accessToken,
+            userName: response.user['name'] as String,
+            token:    response.accessToken,
+            roles:    roles,
           ),
         ),
       );
@@ -155,7 +162,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-  
   Widget _mobile() {
     return SafeArea(
       child: Center(
@@ -176,7 +182,6 @@ class _LoginScreenState extends State<LoginScreen>
     );
   }
 
-
   Widget _formContent() {
     return Form(
       key: formKey,
@@ -184,7 +189,6 @@ class _LoginScreenState extends State<LoginScreen>
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-
 
           Center(
             child: Container(
@@ -284,7 +288,6 @@ class _LoginScreenState extends State<LoginScreen>
           ),
 
           const SizedBox(height: 14),
-
 
           TextFormField(
             controller: passwordController,
@@ -489,7 +492,6 @@ class _LeftPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
 
-
           Container(
             width: 300,
             height: 300,
@@ -546,62 +548,11 @@ class _LeftPanel extends StatelessWidget {
             ),
           ),
 
-          /* const SizedBox(height: 44), */
-
-          /* 
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: const [
-              _ModuleChip(icon: Icons.elderly_outlined,   label: 'Pacientes'),
-              _ModuleChip(icon: Icons.bed_outlined,        label: 'Camas'),
-              _ModuleChip(icon: Icons.medication_outlined, label: 'Medicación'),
-              _ModuleChip(icon: Icons.event_outlined,      label: 'Actividades'),
-              _ModuleChip(icon: Icons.people_outline,      label: 'Empleados'),
-              _ModuleChip(icon: Icons.history,             label: 'Historial'),
-            ],
-          ), */
-
-          /* const SizedBox(height: 48), */
         ],
       ),
     );
   }
 }
-
-/* class _ModuleChip extends StatelessWidget {
-  final IconData icon;
-  final String   label;
-  const _ModuleChip({required this.icon, required this.label});
- */
-/*   @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white.withValues(alpha: 0.09),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.16), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 14, color: Colors.white.withValues(alpha: 0.70)),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              color: Colors.white.withValues(alpha: 0.70),
-              letterSpacing: 0.3,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
- */
 
 class _LoginBgPainter extends CustomPainter {
   @override

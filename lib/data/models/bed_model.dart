@@ -3,8 +3,8 @@ import 'package:app_geriatrico/data/models/room_model.dart';
 class Bed {
   final int id;
   final int roomId;
-  final String bedNumber; // backend: bed_number
-  final String status;    // 'available' | 'occupied' | 'maintenance'
+  final String bedNumber; 
+  final String status;   
   final Room? room;
 
   const Bed({

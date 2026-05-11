@@ -43,9 +43,6 @@ class MedicalPrescriptionRepository {
     await api.delete('/medical-prescriptions/$id');
   }
 
-  // -----------------------------------------------------------------------
-  // Horarios de una prescripción
-  // -----------------------------------------------------------------------
 
   Future<List<PrescriptionSchedule>> getSchedules(int prescriptionId) async {
     final response = await api.get(
@@ -62,13 +59,13 @@ class MedicalPrescriptionRepository {
   }) async {
     final response = await api.post(
       '/medical-prescriptions/$prescriptionId/schedules',
-      {'scheduled_time': time, if (label != null) 'label': label},
+      {'scheduled_time': time, 'label': ?label},
     );
     final body = jsonDecode(response.body);
     return PrescriptionSchedule.fromJson(body['data']);
   }
 
-  /// Reemplaza todos los horarios de una prescripción de una vez.
+ 
   Future<void> syncSchedules(
     int prescriptionId,
     List<Map<String, dynamic>> schedules,

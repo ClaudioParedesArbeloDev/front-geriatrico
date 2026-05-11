@@ -19,7 +19,7 @@ class PatientDiagnosis {
     this.professional,
   });
 
-  /// Muestra el código CIE-10 y descripción juntos si existen.
+  
   String? get cie10Display {
     if (cie10Code == null) return null;
     if (cie10Label != null) return '$cie10Code — $cie10Label';

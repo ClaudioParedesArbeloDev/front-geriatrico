@@ -34,7 +34,7 @@ class VitalSign {
     this.registeredBy,
   });
 
-  /// Devuelve "120/80" o null si no hay presión cargada.
+  
   String? get bloodPressure {
     if (bloodPressureSystolic != null && bloodPressureDiastolic != null) {
       return '$bloodPressureSystolic/$bloodPressureDiastolic';

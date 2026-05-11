@@ -3,7 +3,7 @@ import 'package:app_geriatrico/data/models/employee_model.dart';
 class MedicalStudy {
   final int id;
   final String studyType;
-  final String? conclusion; // nullable: puede no tener resultado aún
+  final String? conclusion; 
   final String? filePath;
   final String? performedAt;
   final Employee? professional;

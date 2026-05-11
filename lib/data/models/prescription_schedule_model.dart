@@ -1,8 +1,8 @@
 class PrescriptionSchedule {
   final int id;
   final int medicalPrescriptionId;
-  final String scheduledTime; // "08:00"
-  final String? label;        // "Desayuno", "Almuerzo", etc.
+  final String scheduledTime; 
+  final String? label;       
 
   const PrescriptionSchedule({
     required this.id,
@@ -15,7 +15,7 @@ class PrescriptionSchedule {
     return PrescriptionSchedule(
       id: json['id'],
       medicalPrescriptionId: json['medical_prescription_id'],
-      // El backend devuelve "08:00:00", mostramos solo "08:00"
+    
       scheduledTime: (json['scheduled_time'] as String? ?? '').length > 5
           ? (json['scheduled_time'] as String).substring(0, 5)
           : json['scheduled_time'] ?? '',

@@ -30,8 +30,11 @@ class PatientRepository {
     return Patient.fromJson(data);
   }
 
-  Future<void> createPatient(Patient patient) async {
-    await api.post('/patients', patient.toJson());
+  
+  Future<Patient> createPatient(Patient patient) async {
+    final response = await api.post('/patients', patient.toJson());
+    final body = jsonDecode(response.body);
+    return Patient.fromJson(body['patient']);
   }
 
   Future<void> updatePatient(Patient patient) async {

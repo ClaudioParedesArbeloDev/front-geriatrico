@@ -22,29 +22,34 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
   bool _saving = false;
   bool _obscurePassword = true;
 
+ 
   List<Role> _allRoles = [];
   final Set<int> _selectedRoleIds = {};
+  bool _loadingRoles = true;      // ← estado de carga separado
+  String? _rolesError;
 
+  
   List<Specialty> _allSpecialties = [];
   final Set<int> _selectedSpecialtyIds = {};
+  bool _loadingSpecialties = true; // ← estado de carga separado
+  String? _specialtiesError;
 
-  final _name = TextEditingController();
-  final _lastName = TextEditingController();
-  final _email = TextEditingController();
-  final _password = TextEditingController();
-  final _dni = TextEditingController();
-  final _phone = TextEditingController();
-  final _address = TextEditingController();
-  final _birthDate = TextEditingController();
-  final _employeeCode = TextEditingController();
+  final _name          = TextEditingController();
+  final _lastName      = TextEditingController();
+  final _email         = TextEditingController();
+  final _password      = TextEditingController();
+  final _dni           = TextEditingController();
+  final _phone         = TextEditingController();
+  final _address       = TextEditingController();
+  final _birthDate     = TextEditingController();
+  final _employeeCode  = TextEditingController();
   final _licenseNumber = TextEditingController();
-  final _hireDate = TextEditingController();
+  final _hireDate      = TextEditingController();
   bool _isActive = true;
 
   @override
   void initState() {
     super.initState();
-    // FIX: EmployeeRepository ahora recibe ApiService
     _repo = EmployeeRepository(
       ApiService(baseUrl: ApiConfig.baseUrl, token: widget.token),
     );
@@ -64,31 +69,48 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
     super.dispose();
   }
 
+  
+
   Future<void> _loadRoles() async {
+    if (!mounted) return;
+    setState(() { _loadingRoles = true; _rolesError = null; });
     try {
       final roles = await _repo.getRoles();
-      if (mounted) setState(() => _allRoles = roles);
+      if (mounted) setState(() { _allRoles = roles; _loadingRoles = false; });
     } catch (e) {
       debugPrint('Error cargando roles: $e');
+      if (mounted) {
+        setState(() {
+          _loadingRoles = false;
+          _rolesError = 'No se pudieron cargar los roles';
+        });
+      }
     }
   }
 
   Future<void> _loadSpecialties() async {
+    if (!mounted) return;
+    setState(() { _loadingSpecialties = true; _specialtiesError = null; });
     try {
-      // FIX: usa _repo.getSpecialties() en lugar de Dio directo
       final list = await _repo.getSpecialties();
-      if (mounted) setState(() => _allSpecialties = list);
+      if (mounted) setState(() { _allSpecialties = list; _loadingSpecialties = false; });
     } catch (e) {
       debugPrint('Error cargando especialidades: $e');
+      if (mounted) {
+        setState(() {
+          _loadingSpecialties = false;
+          _specialtiesError = 'No se pudieron cargar las especialidades';
+        });
+      }
     }
   }
+
+ 
 
   Future<void> _pickDate(TextEditingController ctrl) async {
     DateTime initial = DateTime.now();
     if (ctrl.text.isNotEmpty) {
-      try {
-        initial = DateTime.parse(ctrl.text);
-      } catch (_) {}
+      try { initial = DateTime.parse(ctrl.text); } catch (_) {}
     }
     final picked = await showDatePicker(
       context: context,
@@ -101,9 +123,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
             primary: Color(0xFF4A1240),
             surface: Color(0xFF2A0825),
           ),
-          dialogTheme: const DialogThemeData(
-            backgroundColor: Color(0xFF2A0825),
-          ),
+          dialogTheme: const DialogThemeData(backgroundColor: Color(0xFF2A0825)),
         ),
         child: child!,
       ),
@@ -113,36 +133,34 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
     }
   }
 
+  
+
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _saving = true);
 
     try {
       final data = {
-        'name': _name.text.trim(),
-        'last_name': _lastName.text.trim(),
-        'email': _email.text.trim(),
-        'password': _password.text,
-        'dni': _dni.text.trim().isEmpty ? null : _dni.text.trim(),
-        'phone': _phone.text.trim().isEmpty ? null : _phone.text.trim(),
-        'address': _address.text.trim().isEmpty ? null : _address.text.trim(),
-        'birth_date': _birthDate.text.isEmpty ? null : _birthDate.text,
-        'employee_code': _employeeCode.text.trim().isEmpty ? null : _employeeCode.text.trim(),
+        'name':           _name.text.trim(),
+        'last_name':      _lastName.text.trim(),
+        'email':          _email.text.trim(),
+        'password':       _password.text,
+        'dni':            _dni.text.trim().isEmpty ? null : _dni.text.trim(),
+        'phone':          _phone.text.trim().isEmpty ? null : _phone.text.trim(),
+        'address':        _address.text.trim().isEmpty ? null : _address.text.trim(),
+        'birth_date':     _birthDate.text.isEmpty ? null : _birthDate.text,
+        'employee_code':  _employeeCode.text.trim().isEmpty ? null : _employeeCode.text.trim(),
         'license_number': _licenseNumber.text.trim().isEmpty ? null : _licenseNumber.text.trim(),
-        'hire_date': _hireDate.text.isEmpty ? null : _hireDate.text,
-        'is_active': _isActive,
-        'roles': _selectedRoleIds.toList(),
+        'hire_date':      _hireDate.text.isEmpty ? null : _hireDate.text,
+        'is_active':      _isActive,
+        'roles':          _selectedRoleIds.toList(),
       };
 
       final created = await _repo.create(data);
 
-      // FIX: asigna especialidades usando _repo en lugar de Dio directo
       if (_selectedSpecialtyIds.isNotEmpty) {
         try {
-          await _repo.replaceSpecialties(
-            created.id,
-            _selectedSpecialtyIds.toList(),
-          );
+          await _repo.replaceSpecialties(created.id, _selectedSpecialtyIds.toList());
         } catch (e) {
           debugPrint('Error asignando especialidades: $e');
         }
@@ -172,6 +190,8 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
     );
   }
 
+  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -195,26 +215,24 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                             padding: const EdgeInsets.all(18),
                             children: [
                               _buildSection('Datos personales', [
-                                _fieldRow('Nombre', _name, required: true),
-                                _fieldRow('Apellido', _lastName, required: true),
-                                _fieldRow('DNI', _dni),
-                                _fieldRow('Fecha de nacimiento', _birthDate, isDate: true),
-                                _fieldRow('Email', _email,
+                                _fieldRow('Nombre',              _name,       required: true),
+                                _fieldRow('Apellido',            _lastName,   required: true),
+                                _fieldRow('DNI',                 _dni),
+                                _fieldRow('Fecha de nacimiento', _birthDate,  isDate: true),
+                                _fieldRow('Email',               _email,
                                     required: true,
                                     keyboardType: TextInputType.emailAddress),
-                                _fieldRow('Teléfono', _phone,
+                                _fieldRow('Teléfono',            _phone,
                                     keyboardType: TextInputType.phone),
-                                _fieldRow('Dirección', _address, isLast: true),
+                                _fieldRow('Dirección',           _address,   isLast: true),
                               ]),
                               const SizedBox(height: 14),
-                              _buildSection('Contraseña', [
-                                _passwordRow(),
-                              ]),
+                              _buildSection('Contraseña', [_passwordRow()]),
                               const SizedBox(height: 14),
                               _buildSection('Datos laborales', [
                                 _fieldRow('Código de empleado', _employeeCode),
-                                _fieldRow('N° de licencia', _licenseNumber),
-                                _fieldRow('Fecha de ingreso', _hireDate, isDate: true),
+                                _fieldRow('N° de licencia',     _licenseNumber),
+                                _fieldRow('Fecha de ingreso',   _hireDate, isDate: true),
                                 _buildActiveRow(isLast: true),
                               ]),
                               const SizedBox(height: 14),
@@ -238,14 +256,15 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
             Container(
               color: Colors.black.withValues(alpha: 0.45),
               child: const Center(
-                child: CircularProgressIndicator(
-                    color: Colors.white54, strokeWidth: 1.5),
+                child: CircularProgressIndicator(color: Colors.white54, strokeWidth: 1.5),
               ),
             ),
         ],
       ),
     );
   }
+
+  
 
   Widget _background() => Container(
         decoration: const BoxDecoration(
@@ -262,9 +281,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.04),
-        border: Border(
-          bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07)),
-        ),
+        border: Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.07))),
       ),
       child: Row(
         children: [
@@ -339,8 +356,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : Border(
-                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+            : Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
       ),
       child: TextFormField(
         controller: ctrl,
@@ -353,22 +369,19 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
             : null,
         decoration: InputDecoration(
           labelText: label,
-          labelStyle: TextStyle(
-              color: Colors.white.withValues(alpha: 0.40), fontSize: 12),
+          labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.40), fontSize: 12),
           suffixIcon: isDate
               ? Icon(Icons.calendar_today_outlined,
                   size: 15, color: Colors.white.withValues(alpha: 0.30))
               : null,
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.white54)),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18))),
+          focusedBorder:
+              const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white54)),
           errorBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.error.withValues(alpha: 0.65)),
-          ),
-          errorStyle: TextStyle(
-              color: AppColors.error.withValues(alpha: 0.80), fontSize: 11),
+              borderSide: BorderSide(color: AppColors.error.withValues(alpha: 0.65))),
+          errorStyle:
+              TextStyle(color: AppColors.error.withValues(alpha: 0.80), fontSize: 11),
         ),
       ),
     );
@@ -388,28 +401,23 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
         },
         decoration: InputDecoration(
           labelText: 'Contraseña',
-          labelStyle: TextStyle(
-              color: Colors.white.withValues(alpha: 0.40), fontSize: 12),
+          labelStyle: TextStyle(color: Colors.white.withValues(alpha: 0.40), fontSize: 12),
           suffixIcon: IconButton(
             icon: Icon(
-              _obscurePassword
-                  ? Icons.visibility_outlined
-                  : Icons.visibility_off_outlined,
+              _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
               size: 18,
               color: Colors.white.withValues(alpha: 0.35),
             ),
             onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
           ),
           enabledBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18)),
-          ),
-          focusedBorder: const UnderlineInputBorder(
-              borderSide: BorderSide(color: Colors.white54)),
+              borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.18))),
+          focusedBorder:
+              const UnderlineInputBorder(borderSide: BorderSide(color: Colors.white54)),
           errorBorder: UnderlineInputBorder(
-            borderSide: BorderSide(color: AppColors.error.withValues(alpha: 0.65)),
-          ),
-          errorStyle: TextStyle(
-              color: AppColors.error.withValues(alpha: 0.80), fontSize: 11),
+              borderSide: BorderSide(color: AppColors.error.withValues(alpha: 0.65))),
+          errorStyle:
+              TextStyle(color: AppColors.error.withValues(alpha: 0.80), fontSize: 11),
         ),
       ),
     );
@@ -421,14 +429,12 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       decoration: BoxDecoration(
         border: isLast
             ? null
-            : Border(
-                bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
+            : Border(bottom: BorderSide(color: Colors.white.withValues(alpha: 0.05))),
       ),
       child: Row(
         children: [
           Text('Estado',
-              style: TextStyle(
-                  fontSize: 13, color: Colors.white.withValues(alpha: 0.65))),
+              style: TextStyle(fontSize: 13, color: Colors.white.withValues(alpha: 0.65))),
           const Spacer(),
           Switch(
             value: _isActive,
@@ -440,6 +446,8 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
       ),
     );
   }
+
+  
 
   Widget _buildRolesSection() {
     return Container(
@@ -453,69 +461,82 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 13, 16, 9),
-            child: Text('ROLES',
-                style: TextStyle(
-                    fontSize: 10,
-                    letterSpacing: 2,
-                    color: Colors.white.withValues(alpha: 0.30),
-                    fontWeight: FontWeight.w500)),
+            child: Row(
+              children: [
+                Text('ROLES',
+                    style: TextStyle(
+                        fontSize: 10,
+                        letterSpacing: 2,
+                        color: Colors.white.withValues(alpha: 0.30),
+                        fontWeight: FontWeight.w500)),
+                const Spacer(),
+                // Botón de reintentar si hay error
+                if (_rolesError != null)
+                  GestureDetector(
+                    onTap: _loadRoles,
+                    child: Text('Reintentar',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.white.withValues(alpha: 0.45),
+                            decoration: TextDecoration.underline)),
+                  ),
+              ],
+            ),
           ),
           Container(height: 1, color: Colors.white.withValues(alpha: 0.06)),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: _allRoles.isEmpty
-                ? Row(
-                    children: [
-                      const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 1, color: Colors.white24),
-                      ),
-                      const SizedBox(width: 10),
-                      Text('Cargando roles...',
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.28),
-                              fontSize: 13)),
-                    ],
-                  )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _allRoles.map((role) {
-                      final sel = _selectedRoleIds.contains(role.id);
-                      return FilterChip(
-                        label: Text(role.displayName,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: sel
-                                    ? Colors.white
-                                    : Colors.white.withValues(alpha: 0.55))),
-                        selected: sel,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _selectedRoleIds.add(role.id);
-                          } else {
-                            _selectedRoleIds.remove(role.id);
-                          }
-                        }),
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
-                        selectedColor: const Color(0xFF4A1240).withValues(alpha: 0.90),
-                        checkmarkColor: Colors.white70,
-                        side: BorderSide(
-                          color: sel
-                              ? Colors.white.withValues(alpha: 0.22)
-                              : Colors.white.withValues(alpha: 0.10),
-                        ),
-                        showCheckmark: true,
-                      );
-                    }).toList(),
-                  ),
+            child: _buildRolesContent(),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildRolesContent() {
+   
+    if (_loadingRoles) {
+      return _loadingRow('Cargando roles...');
+    }
+    
+    if (_rolesError != null) {
+      return _errorRow(_rolesError!);
+    }
+    
+    if (_allRoles.isEmpty) {
+      return _emptyRow('No hay roles disponibles.\nAsegurate de correr los seeders en el back.');
+    }
+    
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _allRoles.map((role) {
+        final sel = _selectedRoleIds.contains(role.id);
+        return FilterChip(
+          label: Text(role.displayName,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: sel ? Colors.white : Colors.white.withValues(alpha: 0.55))),
+          selected: sel,
+          onSelected: (v) => setState(() {
+            if (v) { _selectedRoleIds.add(role.id); }
+            else   { _selectedRoleIds.remove(role.id); }
+          }),
+          backgroundColor: Colors.white.withValues(alpha: 0.06),
+          selectedColor: const Color(0xFF4A1240).withValues(alpha: 0.90),
+          checkmarkColor: Colors.white70,
+          side: BorderSide(
+            color: sel
+                ? Colors.white.withValues(alpha: 0.22)
+                : Colors.white.withValues(alpha: 0.10),
+          ),
+          showCheckmark: true,
+        );
+      }).toList(),
+    );
+  }
+
+ 
 
   Widget _buildSpecialtiesSection() {
     return Container(
@@ -538,77 +559,113 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
                         color: Colors.white.withValues(alpha: 0.30),
                         fontWeight: FontWeight.w500)),
                 const Spacer(),
-                Text('Opcional',
-                    style: TextStyle(
-                        fontSize: 9,
-                        color: Colors.white.withValues(alpha: 0.20),
-                        letterSpacing: 0.5)),
+                if (_specialtiesError != null)
+                  GestureDetector(
+                    onTap: _loadSpecialties,
+                    child: Text('Reintentar',
+                        style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.white.withValues(alpha: 0.45),
+                            decoration: TextDecoration.underline)),
+                  )
+                else
+                  Text('Opcional',
+                      style: TextStyle(
+                          fontSize: 9,
+                          color: Colors.white.withValues(alpha: 0.20),
+                          letterSpacing: 0.5)),
               ],
             ),
           ),
           Container(height: 1, color: Colors.white.withValues(alpha: 0.06)),
           Padding(
             padding: const EdgeInsets.all(16),
-            child: _allSpecialties.isEmpty
-                ? Row(
-                    children: [
-                      const SizedBox(
-                        width: 14,
-                        height: 14,
-                        child: CircularProgressIndicator(
-                            strokeWidth: 1, color: Colors.white24),
-                      ),
-                      const SizedBox(width: 10),
-                      Text('Cargando especialidades...',
-                          style: TextStyle(
-                              color: Colors.white.withValues(alpha: 0.28),
-                              fontSize: 13)),
-                    ],
-                  )
-                : Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: _allSpecialties.map((spec) {
-                      final sel = _selectedSpecialtyIds.contains(spec.id);
-                      return FilterChip(
-                        avatar: sel
-                            ? Icon(Icons.check_circle_outline,
-                                size: 14,
-                                color: Colors.white.withValues(alpha: 0.75))
-                            : Icon(Icons.add_circle_outline,
-                                size: 14,
-                                color: Colors.white.withValues(alpha: 0.30)),
-                        label: Text(spec.name,
-                            style: TextStyle(
-                                fontSize: 12,
-                                color: sel
-                                    ? Colors.white
-                                    : Colors.white.withValues(alpha: 0.50))),
-                        selected: sel,
-                        onSelected: (v) => setState(() {
-                          if (v) {
-                            _selectedSpecialtyIds.add(spec.id);
-                          } else {
-                            _selectedSpecialtyIds.remove(spec.id);
-                          }
-                        }),
-                        backgroundColor: Colors.white.withValues(alpha: 0.06),
-                        selectedColor: const Color(0xFF7C3E6A).withValues(alpha: 0.85),
-                        checkmarkColor: Colors.transparent,
-                        side: BorderSide(
-                          color: sel
-                              ? const Color(0xFF9C4E8A).withValues(alpha: 0.40)
-                              : Colors.white.withValues(alpha: 0.10),
-                        ),
-                        showCheckmark: false,
-                      );
-                    }).toList(),
-                  ),
+            child: _buildSpecialtiesContent(),
           ),
         ],
       ),
     );
   }
+
+  Widget _buildSpecialtiesContent() {
+    if (_loadingSpecialties) {
+      return _loadingRow('Cargando especialidades...');
+    }
+    if (_specialtiesError != null) {
+      return _errorRow(_specialtiesError!);
+    }
+    if (_allSpecialties.isEmpty) {
+      return _emptyRow('No hay especialidades cargadas.\nPodés crearlas desde el panel de admin.');
+    }
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: _allSpecialties.map((spec) {
+        final sel = _selectedSpecialtyIds.contains(spec.id);
+        return FilterChip(
+          avatar: sel
+              ? Icon(Icons.check_circle_outline,
+                  size: 14, color: Colors.white.withValues(alpha: 0.75))
+              : Icon(Icons.add_circle_outline,
+                  size: 14, color: Colors.white.withValues(alpha: 0.30)),
+          label: Text(spec.name,
+              style: TextStyle(
+                  fontSize: 12,
+                  color: sel ? Colors.white : Colors.white.withValues(alpha: 0.50))),
+          selected: sel,
+          onSelected: (v) => setState(() {
+            if (v) { _selectedSpecialtyIds.add(spec.id); }
+            else   { _selectedSpecialtyIds.remove(spec.id); }
+          }),
+          backgroundColor: Colors.white.withValues(alpha: 0.06),
+          selectedColor: const Color(0xFF7C3E6A).withValues(alpha: 0.85),
+          checkmarkColor: Colors.transparent,
+          side: BorderSide(
+            color: sel
+                ? const Color(0xFF9C4E8A).withValues(alpha: 0.40)
+                : Colors.white.withValues(alpha: 0.10),
+          ),
+          showCheckmark: false,
+        );
+      }).toList(),
+    );
+  }
+
+  
+
+  Widget _loadingRow(String label) => Row(
+        children: [
+          const SizedBox(
+              width: 14,
+              height: 14,
+              child: CircularProgressIndicator(strokeWidth: 1, color: Colors.white24)),
+          const SizedBox(width: 10),
+          Text(label,
+              style: TextStyle(color: Colors.white.withValues(alpha: 0.28), fontSize: 13)),
+        ],
+      );
+
+  Widget _errorRow(String msg) => Row(
+        children: [
+          Icon(Icons.error_outline, size: 15, color: AppColors.error.withValues(alpha: 0.60)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(msg,
+                style: TextStyle(
+                    color: AppColors.error.withValues(alpha: 0.70), fontSize: 12)),
+          ),
+        ],
+      );
+
+  Widget _emptyRow(String msg) => Text(
+        msg,
+        style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.28),
+            fontSize: 12,
+            height: 1.5),
+      );
+
+  
 
   Widget _buildSaveButton() {
     return SizedBox(
@@ -627,8 +684,7 @@ class _CreateEmployeeScreenState extends State<CreateEmployeeScreen> {
         ),
         child: const Text(
           'Crear empleado',
-          style: TextStyle(
-              fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.3),
+          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500, letterSpacing: 0.3),
         ),
       ),
     );

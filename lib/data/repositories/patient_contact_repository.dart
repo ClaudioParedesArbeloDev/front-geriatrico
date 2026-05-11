@@ -8,7 +8,7 @@ class PatientContactRepository {
   PatientContactRepository(this.api);
 
   Future<List<PatientContact>> getByPatient(int patientId) async {
-    // CORRECCIÓN: era /patientcontacts, la ruta correcta es /patient-contacts
+    
     final response = await api.get('/patient-contacts?patient_id=$patientId');
     final List data = jsonDecode(response.body);
     return data.map((e) => PatientContact.fromJson(e)).toList();
@@ -26,7 +26,7 @@ class PatientContactRepository {
     return PatientContact.fromJson(body['data']);
   }
 
-  /// Marca este contacto como responsable principal del paciente.
+  
   Future<void> setPrimary(int id) async {
     await api.patch('/patient-contacts/$id/set-primary', {});
   }
