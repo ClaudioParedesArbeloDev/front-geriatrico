@@ -6,6 +6,7 @@ import 'package:app_geriatrico/screens/employees_screen.dart';
 import 'package:app_geriatrico/screens/patients_screen.dart';
 import 'package:app_geriatrico/screens/beds_screen.dart';
 import 'package:app_geriatrico/screens/rooms_screen.dart';
+import 'package:app_geriatrico/screens/medications_screen.dart';
 
 // ─────────────────────────────────────────────────────────────────────────────
 //  Módulo de menú
@@ -64,6 +65,13 @@ const _adminModules = [
     subtitle: 'Control de ocupación',
     icon: Icons.bed_outlined,
     accent: Color(0xFFB55B5B),
+  ),
+  _NavModule(
+    id: 'medicamentos',
+    title: 'Medicamentos',
+    subtitle: 'Catálogo de fármacos',
+    icon: Icons.medication_outlined,
+    accent: Color(0xFF5B8FB5),
   ),
 ];
 
@@ -229,6 +237,9 @@ class _HomeScreenState extends State<HomeScreen>
         break;
       case 'personal':
         screen = EmployeesScreen(token: widget.token);
+        break;
+      case 'medicamentos':
+        screen = MedicationsScreen(token: widget.token);
         break;
       default:
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(

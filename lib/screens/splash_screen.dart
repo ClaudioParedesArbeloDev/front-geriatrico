@@ -42,12 +42,12 @@ class _SplashScreenState extends State<SplashScreen>
 
   void _buildAnimations() {
     _bgController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+        vsync: this, duration: const Duration(milliseconds: 600));
     _bgOpacity = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _bgController, curve: Curves.easeOut));
 
     _logoController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 900));
+        vsync: this, duration: const Duration(milliseconds: 600));
     _logoOpacity = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _logoController, curve: const Interval(0, 0.7, curve: Curves.easeOut)));
     _logoScale = Tween<double>(begin: 0.75, end: 1.0).animate(
@@ -56,52 +56,52 @@ class _SplashScreenState extends State<SplashScreen>
         CurvedAnimation(parent: _logoController, curve: Curves.easeOut));
 
     _ruleController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 700));
+        vsync: this, duration: const Duration(milliseconds: 500));
     _ruleWidth = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _ruleController, curve: Curves.easeOut));
 
     _titleController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 750));
+        vsync: this, duration: const Duration(milliseconds: 500));
     _titleOpacity = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _titleController, curve: Curves.easeOut));
     _titleSlide = Tween<Offset>(begin: const Offset(0, 0.25), end: Offset.zero)
         .animate(CurvedAnimation(parent: _titleController, curve: Curves.easeOutCubic));
 
     _taglineController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 600));
+        vsync: this, duration: const Duration(milliseconds: 400));
     _taglineOpacity = Tween<double>(begin: 0, end: 1).animate(
         CurvedAnimation(parent: _taglineController, curve: Curves.easeOut));
 
     _barController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 2000));
+        vsync: this, duration: const Duration(milliseconds: 1200));
     _barProgress = CurvedAnimation(parent: _barController, curve: Curves.easeInOut);
 
     _exitController = AnimationController(
-        vsync: this, duration: const Duration(milliseconds: 500));
+        vsync: this, duration: const Duration(milliseconds: 400));
     _exitOpacity = Tween<double>(begin: 1, end: 0).animate(
         CurvedAnimation(parent: _exitController, curve: Curves.easeIn));
   }
 
   Future<void> _runSequence() async {
-    await Future.delayed(const Duration(milliseconds: 80));
+    await Future.delayed(const Duration(milliseconds: 60));
     _bgController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 200));
+    await Future.delayed(const Duration(milliseconds: 150));
     _logoController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 350));
     _ruleController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 380));
+    await Future.delayed(const Duration(milliseconds: 250));
     _titleController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 200));
     _taglineController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 150));
+    await Future.delayed(const Duration(milliseconds: 100));
     _barController.forward();
 
-    await Future.delayed(const Duration(milliseconds: 2200));
+    await Future.delayed(const Duration(milliseconds: 1350));
     if (!mounted) return;
 
     await _exitController.forward();
@@ -113,7 +113,7 @@ class _SplashScreenState extends State<SplashScreen>
         pageBuilder: (_, _, _) => const LoginScreen(),
         transitionsBuilder: (_, anim, _, child) =>
             FadeTransition(opacity: anim, child: child),
-        transitionDuration: const Duration(milliseconds: 500),
+        transitionDuration: const Duration(milliseconds: 400),
       ),
     );
   }
@@ -132,7 +132,8 @@ class _SplashScreenState extends State<SplashScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
+    final size   = MediaQuery.of(context).size;
+    final isSmall = size.height < 680; 
 
     return AnimatedBuilder(
       animation: _exitOpacity,
@@ -141,7 +142,6 @@ class _SplashScreenState extends State<SplashScreen>
         body: Stack(
           children: [
 
-            
             FadeTransition(
               opacity: _bgOpacity,
               child: Container(
@@ -161,7 +161,6 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            
             FadeTransition(
               opacity: _bgOpacity,
               child: CustomPaint(
@@ -170,18 +169,17 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-
             AnimatedBuilder(
               animation: _glowPulse,
               builder: (_, _) => Center(
                 child: Container(
-                  width: 280,
-                  height: 280,
+                  width: 260,
+                  height: 260,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: RadialGradient(
                       colors: [
-                        Colors.white.withValues(alpha: 0.07 * _glowPulse.value,),
+                        Colors.white.withValues(alpha: 0.07 * _glowPulse.value),
                         Colors.transparent,
                       ],
                     ),
@@ -190,123 +188,128 @@ class _SplashScreenState extends State<SplashScreen>
               ),
             ),
 
-            
-            Center(
+            SafeArea(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
+                  Expanded(
+                    child: Center(
+                      child: SingleChildScrollView(
+                        physics: const NeverScrollableScrollPhysics(),
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(
+                            vertical: isSmall ? 8 : 16,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
 
-                  AnimatedBuilder(
-                    animation: _logoController,
-                    builder: (_, child) => Opacity(
-                      opacity: _logoOpacity.value,
-                      child: Transform.scale(scale: _logoScale.value, child: child),
-                    ),
-                    child: const _LogoBadge(),
-                  ),
+                              AnimatedBuilder(
+                                animation: _logoController,
+                                builder: (_, child) => Opacity(
+                                  opacity: _logoOpacity.value,
+                                  child: Transform.scale(scale: _logoScale.value, child: child),
+                                ),
+                                child: _LogoBadge(size: isSmall ? 120 : 160),
+                              ),
 
-                  const SizedBox(height: 32),
+                              SizedBox(height: isSmall ? 20 : 32),
 
-                  AnimatedBuilder(
-                    animation: _ruleWidth,
-                    builder: (_, _) => Container(
-                      width: 200 * _ruleWidth.value,
-                      height: 1,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.transparent,
-                            Colors.white.withValues(alpha: 0.35),
-                            Colors.white.withValues(alpha: 0.35),
-                            Colors.transparent,
-                          ],
+                              AnimatedBuilder(
+                                animation: _ruleWidth,
+                                builder: (_, _) => Container(
+                                  width: 200 * _ruleWidth.value,
+                                  height: 1,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.transparent,
+                                        Colors.white.withValues(alpha: 0.35),
+                                        Colors.white.withValues(alpha: 0.35),
+                                        Colors.transparent,
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: isSmall ? 14 : 22),
+
+                              FadeTransition(
+                                opacity: _taglineOpacity,
+                                child: Text(
+                                  'RESIDENCIA PARA ADULTOS MAYORES',
+                                  style: TextStyle(
+                                    fontSize: isSmall ? 8 : 9,
+                                    letterSpacing: 3.5,
+                                    color: Colors.white.withValues(alpha: 0.55),
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: isSmall ? 8 : 12),
+
+                              SlideTransition(
+                                position: _titleSlide,
+                                child: FadeTransition(
+                                  opacity: _titleOpacity,
+                                  child: Text(
+                                    'Carlota',
+                                    style: TextStyle(
+                                      fontSize: isSmall ? 44 : 56,
+                                      fontWeight: FontWeight.w200,
+                                      color: Colors.white,
+                                      letterSpacing: 8,
+                                      height: 1,
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              SizedBox(height: isSmall ? 10 : 16),
+
+
+                              AnimatedBuilder(
+                                animation: _ruleWidth,
+                                builder: (_, _) => Container(
+                                  width: 64 * _ruleWidth.value,
+                                  height: 1.5,
+                                  color: Colors.white.withValues(alpha: 0.40),
+                                ),
+                              ),
+
+                              SizedBox(height: isSmall ? 12 : 18),
+
+
+                              FadeTransition(
+                                opacity: _taglineOpacity,
+                                child: Text(
+                                  'Cuidado · Respeto · Bienestar',
+                                  style: TextStyle(
+                                    fontSize: isSmall ? 10 : 12,
+                                    letterSpacing: 2.2,
+                                    color: Colors.white.withValues(alpha: 0.50),
+                                    fontWeight: FontWeight.w300,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 22),
-
                   FadeTransition(
                     opacity: _taglineOpacity,
-                    child: Text(
-                      'RESIDENCIA PARA ADULTOS MAYORES',
-                      style: TextStyle(
-                        fontSize: 9,
-                        letterSpacing: 3.5,
-                        color: Colors.white.withValues(alpha: 0.55),
-                        fontWeight: FontWeight.w400,
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  SlideTransition(
-                    position: _titleSlide,
-                    child: FadeTransition(
-                      opacity: _titleOpacity,
-                      child: const Text(
-                        'Carlota',
-                        style: TextStyle(
-                          fontSize: 56,
-                          fontWeight: FontWeight.w200,
-                          color: Colors.white,
-                          letterSpacing: 8,
-                          height: 1,
-                        ),
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-
-                  AnimatedBuilder(
-                    animation: _ruleWidth,
-                    builder: (_, _) => Container(
-                      width: 64 * _ruleWidth.value,
-                      height: 1.5,
-                      color: Colors.white.withValues(alpha: 0.40),
-                    ),
-                  ),
-
-                  const SizedBox(height: 18),
-
-                  
-                  FadeTransition(
-                    opacity: _taglineOpacity,
-                    child: Text(
-                      'Cuidado · Respeto · Bienestar',
-                      style: TextStyle(
-                        fontSize: 12,
-                        letterSpacing: 2.2,
-                        color: Colors.white.withValues(alpha: 0.50),
-                        fontWeight: FontWeight.w300,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            Positioned(
-              bottom: 0,
-              left: 0,
-              right: 0,
-              child: FadeTransition(
-                opacity: _taglineOpacity,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 32),
+                    child: Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Container(
-                            width: 40,
-                            height: 40,
+                            width: 36,
+                            height: 36,
                             margin: const EdgeInsets.only(right: 8),
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
@@ -335,19 +338,20 @@ class _SplashScreenState extends State<SplashScreen>
                         ],
                       ),
                     ),
-                    AnimatedBuilder(
-                      animation: _barProgress,
-                      builder: (_, _) => LinearProgressIndicator(
-                        value: _barProgress.value,
-                        minHeight: 2,
-                        backgroundColor: Colors.white.withValues(alpha: 0.08),
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          Colors.white.withValues(alpha: 0.45),
-                        ),
+                  ),
+
+                  AnimatedBuilder(
+                    animation: _barProgress,
+                    builder: (_, _) => LinearProgressIndicator(
+                      value: _barProgress.value,
+                      minHeight: 2,
+                      backgroundColor: Colors.white.withValues(alpha: 0.08),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Colors.white.withValues(alpha: 0.45),
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
 
@@ -367,14 +371,17 @@ class _SplashScreenState extends State<SplashScreen>
   }
 }
 
+
+
 class _LogoBadge extends StatelessWidget {
-  const _LogoBadge();
+  final double size;
+  const _LogoBadge({this.size = 160});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 160,
-      height: 160,
+      width: size,
+      height: size,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         color: Colors.white,
@@ -395,7 +402,7 @@ class _LogoBadge extends StatelessWidget {
           width: 2,
         ),
       ),
-      padding: const EdgeInsets.all(28),
+      padding: EdgeInsets.all(size * 0.175),
       child: Image.asset(
         'assets/images/LogoCarlota.png',
         fit: BoxFit.contain,
@@ -412,12 +419,10 @@ class _SplashPatternPainter extends CustomPainter {
       ..strokeWidth = 0.8
       ..style = PaintingStyle.stroke;
 
-    
     for (double i = -size.height; i < size.width * 2; i += 80) {
       canvas.drawLine(Offset(i, 0), Offset(i + size.height * 0.6, size.height), p);
     }
 
-    
     final arcPaint = Paint()
       ..color = Colors.white.withValues(alpha: 0.04)
       ..strokeWidth = 1
